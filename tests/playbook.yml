@@ -1,5 +1,7 @@
 ---
-- hosts: all
+- hosts: ansible-role-ca-store-openbsd
   gather_facts: false
-  roles:
-    - role: ansible-role-example
+  roles: [ ansible-role-openbsd-bootstrap ]
+
+- hosts: all
+  roles: [ ansible-role-ca-store ]

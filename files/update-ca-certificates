@@ -1,0 +1,89 @@
+#!/bin/sh
+# Update the CA certificates store.
+# Assumptions:
+# - Running on OpenBSD.
+# - /root/ca-certificates.crt exists.
+# - /etc/ssl/certs/ exists.
+# - /usr/share/ca-certificates exists.
+# - /usr/local/share/ca-certificates exists.
+set -eu
+
+error () {
+# Print error message and exit with return code 1.
+    echo $@
+    exit 1
+}
+
+alias subject_hash='openssl x509 -noout -subject_hash -in'
+alias cert_list='find /usr/share/ca-certificates/ \
+    /usr/local/share/ca-certificates/ -name *.crt'
+
+organizationalunit () {
+    openssl x509 -noout -subject -in $1 -nameopt multiline | \
+        awk -F'= ' '/organizationalUnitName/ {print $2}'
+}
+
+commonname () {
+    openssl x509 -noout -subject -in $1 -nameopt multiline | \
+        awk -F'= ' '/commonName/ {print $2}'
+}
+
+subject () {
+    if [ -n "$(commonname $@)" ]
+    then
+        commonname $@
+    else
+        organizationalunit $@
+    fi
+}
+
+clean_certs () {
+# Delete the symlinks in /etc/ssl/certs and upstram provided certs in 
+# /usr/share/ca-certificates.
+    rm -f /usr/share/ca-certificates/*
+    find /etc/ssl/certs/ -type l -maxdepth 1 -exec rm {} \;
+}
+
+gen_upstream_certs() {
+# Generate the certs by subject in /usr/share/ca-certificates.
+    local certificate
+    awk '/-----BEGIN[A-Z0-9 ]*CERTIFICATE-----/ {n++} \
+        n > 0 {print > ("/usr/share/ca-certificates/cert" (1+n) ".crt")}' \
+        /root/ca-certificates.crt
+    #for certificate in /usr/share/ca-certificates/cert*
+    #do
+    #    [ -f "$certificate" ] || continue
+    #    mv "$certificate" "$(subject $certificate).crt"
+    #done
+}
+
+gen_certs_symlinks () {
+# Generate the symlinks by subject and hash in /etc/ssl/certs.
+    local certificate
+    for certificate in $(cert_list)
+    do
+        [ -f "$certificate" ] || continue
+        ln -s "$certificate" "/etc/ssl/certs/$(basename $certificate .crt).pem"
+        ln -s "$certificate" "/etc/ssl/certs/$(subject_hash $certificate)"
+    done
+}
+
+gen_concat_cert () {
+# Generate a single concatenated file of all certs.
+    cat $(cert_list) > /etc/ssl/certs/ca-certificates.crt
+}
+
+for directory in /usr/share/ca-certificates \
+                 /usr/local/share/ca-certificates \
+                 /etc/ssl/certs
+do
+    [ -d $directory ] || error $directory doesn\'t exist.
+done
+
+[ -r /root/ca-certificates.crt ] || \
+    error Can\'t access /root/ca-certificates.crt.
+
+clean_certs
+gen_upstream_certs
+gen_certs_symlinks
+gen_concat_cert

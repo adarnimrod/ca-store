@@ -10,3 +10,8 @@
     sha: 94b506c144d4e22ebc1deef637a818db13bcaca5
     hooks:
     -   id: ansible-pre-commit
+-   repo: https://www.shore.co.il/git/shell-pre-commit
+    sha: master
+    hooks:
+    -   id: shell-lint
+        files: update-ca-certificates

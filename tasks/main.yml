@@ -1,7 +1,103 @@
 ---
 # tasks file for ansible-role-example
 
-- assert:
-    that:
-        - ansible_os_family == 'OpenBSD'
-        - ansible_distribution_release == '5.9'
+- name: Assert
+  assert:
+    that: ansible_os_family in [ 'OpenBSD', 'Debian' ]
+
+- name: APT install
+  when: ansible_pkg_mgr == 'apt'
+  with_items:
+      - ssl-cert
+      - ca-certificates
+  apt:
+      name: '{{ item }}'
+      state: latest
+      update_cache: yes
+      cache_valid_time: 3600
+
+- name: Create TLS key-owner group
+  group:
+    name: ssl-cert
+    state: present
+
+- name: Create TLS keys and certs directories
+  with_items:
+  - path: /etc/ssl/certs
+    group: ssl-cert
+  - path: /etc/ssl/private
+    mode: 0o0710
+    group: ssl-cert
+  - path: /usr/share/ca-certificates
+  - path: /usr/local/share/ca-certificates
+  file:
+    path: '{{ item.path }}'
+    owner: root
+    group: '{{ item.group|default(0) }}'
+    mode: '{{ item.mode|default("0755") }}'
+    state: directory
+
+- name: Get current OpenBSD CA store
+  when: ansible_os_family == 'OpenBSD'
+  get_url:
+    url: http://cvsweb.openbsd.org/cgi-bin/cvsweb/~checkout~/src/lib/libcrypto/cert.pem
+    dest: /root/ca-certificates.crt
+    owner: root
+    group: wheel
+    mode: 0o0644
+  notify:
+  - Update CA store
+
+- name: Copy update-ca-certifcates script
+  when: ansible_os_family == 'OpenBSD'
+  copy:
+    src: update-ca-certificates
+    dest: /usr/local/sbin/update-ca-certificates
+    owner: root
+    group: wheel
+    mode: 0o0755
+  notify:
+  - Update CA store
+
+- stat:
+    path: /etc/ssl/private/ssl-cert-snakeoil.key
+  register: tls_stat_key
+
+- name: Generate self-signed TLS key
+  when: not tls_stat_key.stat.exists
+  command: /usr/bin/openssl genrsa -out /etc/ssl/private/ssl-cert-snakeoil.key 2048
+
+- name: Set permissions on self-signed TLS key
+  file:
+      path: /etc/ssl/private/ssl-cert-snakeoil.key
+      owner: root
+      group: ssl-cert
+      mode: 0o0640
+
+- stat:
+    path: /etc/ssl/certs/ssl-cert-snakeoil.pem
+  register: tls_stat_cert
+
+- name: Generate self-signed TLS cert
+  when: not tls_stat_cert.stat.exists
+  command: |
+    /usr/bin/openssl req \
+        -x509 \
+        -new \
+        -key /etc/ssl/private/ssl-cert-snakeoil.key \
+        -nodes \
+        -out /etc/ssl/certs/ssl-cert-snakeoil.pem \
+        -days 3650
+        -subj "/CN={{ ansible_fqdn }}"
+  notify:
+  - Update CA store
+
+- name: Check if dhparams exists and its length
+  ignore_errors: yes
+  dhparams:
+    path: /etc/ssl/dhparams.pem
+  register: tls_dhparams
+
+- name: Generate dhparams (this will take a while)
+  when: tls_dhparams.bits|default(0) < 2048
+  command: /usr/bin/openssl dhparam -out /etc/ssl/dhparams.pem 2048
