@@ -3,7 +3,8 @@
 
 - name: Assert
   assert:
-    that: ansible_os_family in [ 'OpenBSD', 'Debian' ]
+    that:
+        - (ansible_os_family == 'OpenBSD' and ansible_distribution_release | version_compare('5.7', '>=')) or ansible_os_family == 'Debian'
 
 - name: APT install
   when: ansible_pkg_mgr == 'apt'
@@ -41,7 +42,7 @@
   when: ansible_os_family == 'OpenBSD'
   get_url:
     url: http://cvsweb.openbsd.org/cgi-bin/cvsweb/~checkout~/src/lib/libcrypto/cert.pem
-    dest: /root/ca-certificates.crt
+    dest: /etc/ssl/cert.pem
     owner: root
     group: wheel
     mode: 0o0644

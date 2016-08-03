@@ -24,7 +24,7 @@ def test_key_directory(File):
 def test_concat_cert(File, Command):
     assert File('/etc/ssl/certs/ca-certificates.crt').is_file
     assert Command(
-        'grep BEGIN /root/ca-certificates.crt | wc -l').stdout == Command(
+        'grep BEGIN /etc/ssl/cert.pem | wc -l').stdout == Command(
             'grep BEGIN /usr/share/ca-certificates/*.crt | wc -l').stdout
 
 

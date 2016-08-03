@@ -2,7 +2,7 @@
 # Update the CA certificates store.
 # Assumptions:
 # - Running on OpenBSD.
-# - /root/ca-certificates.crt exists.
+# - /etc/ssl/cert.pem exists.
 # - /etc/ssl/certs/ exists.
 # - /usr/share/ca-certificates exists.
 # - /usr/local/share/ca-certificates exists.
@@ -14,18 +14,21 @@ error () {
     exit 1
 }
 
-alias subject_hash='openssl x509 -noout -subject_hash -in'
 alias cert_list='find /usr/share/ca-certificates/ \
-    /usr/local/share/ca-certificates/ -name *.crt'
+    /usr/local/share/ca-certificates/ -name \*.crt'
+
+clean_filename () {
+    perl -pe 's@ @_@g; s@http:@@g; s@/@@g; s@\n@@g'
+}
 
 organizationalunit () {
     openssl x509 -noout -subject -in $1 -nameopt multiline | \
-        awk -F'= ' '/organizationalUnitName/ {print $2}'
+        awk -F'= ' '/organizationalUnitName/ {print $2}' | clean_filename
 }
 
 commonname () {
     openssl x509 -noout -subject -in $1 -nameopt multiline | \
-        awk -F'= ' '/commonName/ {print $2}'
+        awk -F'= ' '/commonName/ {print $2}' | clean_filename
 }
 
 subject () {
@@ -49,23 +52,22 @@ gen_upstream_certs() {
     local certificate
     awk '/-----BEGIN[A-Z0-9 ]*CERTIFICATE-----/ {n++} \
         n > 0 {print > ("/usr/share/ca-certificates/cert" (1+n) ".crt")}' \
-        /root/ca-certificates.crt
-    #for certificate in /usr/share/ca-certificates/cert*
-    #do
-    #    [ -f "$certificate" ] || continue
-    #    mv "$certificate" "$(subject $certificate).crt"
-    #done
+        /etc/ssl/cert.pem
+    for certificate in /usr/share/ca-certificates/cert*
+    do
+        [ -f "$certificate" ] || continue
+        mv "$certificate" "/usr/share/ca-certificates/$(subject $certificate).crt"
+    done
 }
 
 gen_certs_symlinks () {
 # Generate the symlinks by subject and hash in /etc/ssl/certs.
-    local certificate
-    for certificate in $(cert_list)
+    local cert
+    for cert in $(cert_list)
     do
-        [ -f "$certificate" ] || continue
-        ln -s "$certificate" "/etc/ssl/certs/$(basename $certificate .crt).pem"
-        ln -s "$certificate" "/etc/ssl/certs/$(subject_hash $certificate)"
+        ln -s "$cert" "/etc/ssl/certs/$(basename $cert | sed 's/crt$/pem/g')"
     done
+    openssl certhash /etc/ssl/certs
 }
 
 gen_concat_cert () {
@@ -80,8 +82,8 @@ do
     [ -d $directory ] || error $directory doesn\'t exist.
 done
 
-[ -r /root/ca-certificates.crt ] || \
-    error Can\'t access /root/ca-certificates.crt.
+[ -r /etc/ssl/cert.pem ] || \
+    error Can\'t access /etc/ssl/cert.pem.
 
 clean_certs
 gen_upstream_certs
