@@ -28,7 +28,7 @@ def test_concat_cert(File, Command):
             'grep BEGIN /usr/share/ca-certificates/*.crt | wc -l').stdout
 
 
-def test_update_ca_certificates(File, Ansible, Command):
+def test_update_ca_certificates(File, Ansible, Command, Sudo):
     ansible_os_family = Ansible('setup')['ansible_facts']['ansible_os_family']
     if ansible_os_family == 'OpenBSD':
         filename = '/usr/local/sbin/update-ca-certificates'
@@ -37,7 +37,8 @@ def test_update_ca_certificates(File, Ansible, Command):
     update_ca_certificates = File(filename)
     assert update_ca_certificates.is_file
     assert update_ca_certificates.mode == 0o0755
-    assert Command(filename).rc == 0
+    with Sudo():
+        assert Command(filename).rc == 0
 
 
 def test_dh_params(File, Ansible):
@@ -50,8 +51,9 @@ def test_snakeoil_cert(File):
     assert File('/etc/ssl/certs/ssl-cert-snakeoil.pem').is_file
 
 
-def test_snakeoil_key(File):
+def test_snakeoil_key(File, Sudo):
     snakeoil_key = File('/etc/ssl/private/ssl-cert-snakeoil.key')
-    assert snakeoil_key.is_file
-    assert snakeoil_key.group == 'ssl-cert'
-    assert snakeoil_key.mode == 0o0640
+    with Sudo():
+        assert snakeoil_key.is_file
+        assert snakeoil_key.group == 'ssl-cert'
+        assert snakeoil_key.mode == 0o0640
