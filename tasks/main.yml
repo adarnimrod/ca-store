@@ -1,7 +1,6 @@
 ---
 # tasks file for ansible-role-example
-
-- name: Assert
+- name: Assertions
   assert:
     that:
         - (ansible_os_family == 'OpenBSD' and ansible_distribution_release | version_compare('5.7', '>=')) or ansible_os_family == 'Debian'
@@ -13,7 +12,7 @@
       - ca-certificates
   apt:
       name: '{{ item }}'
-      state: latest
+      state: present
       update_cache: yes
       cache_valid_time: 3600
 
@@ -60,7 +59,8 @@
   notify:
   - Update CA store
 
-- stat:
+- name: Stat self-signed key
+  stat:
     path: /etc/ssl/private/ssl-cert-snakeoil.key
   register: tls_stat_key
 
@@ -75,7 +75,8 @@
       group: ssl-cert
       mode: 0o0640
 
-- stat:
+- name: Stat self-signed cert
+  stat:
     path: /etc/ssl/certs/ssl-cert-snakeoil.pem
   register: tls_stat_cert
 
