@@ -1,7 +1,7 @@
 ---
 - hosts: ca-store-openbsd
   gather_facts: false
-  roles: [ openbsd_bootstrap ]
+  roles: [adarnimrod.openbsd-bootstrap]
 
 - hosts: all
   roles: [ ca-store ]
