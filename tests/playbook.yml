@@ -4,4 +4,4 @@
   roles: [ openbsd_bootstrap ]
 
 - hosts: all
-  roles: [ ansible-role-ca-store ]
+  roles: [ ca-store ]
