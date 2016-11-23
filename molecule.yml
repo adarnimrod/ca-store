@@ -30,8 +30,18 @@ vagrant:
 
 docker:
   containers:
-  - name: ansible-role-example-ubuntu
+  - name: ansible-role-ca-store-xenial
     image: ubuntu
     image_version: xenial
+    environment:
+        DEBIAN_FRONTEND: noninteractive
+  - name: ansible-role-ca-store-trusty
+    image: ubuntu
+    image_version: trusty
+    environment:
+        DEBIAN_FRONTEND: noninteractive
+  - name: ansible-role-ca-store-jessie
+    image: debian
+    image_version: jessie
     environment:
         DEBIAN_FRONTEND: noninteractive
