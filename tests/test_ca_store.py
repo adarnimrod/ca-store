@@ -26,17 +26,22 @@ def test_key_directory(File):
 
 def test_concat_cert(File, Command):
     assert File('/etc/ssl/certs/ca-certificates.crt').is_file
-    assert Command(
-        'grep BEGIN /etc/ssl/cert.pem | wc -l').stdout == Command(
-            'grep BEGIN /usr/share/ca-certificates/*.crt | wc -l').stdout
+    assert Command('grep BEGIN /etc/ssl/cert.pem | wc -l').stdout == Command(
+        'grep BEGIN /usr/share/ca-certificates/*.crt | wc -l').stdout
 
 
-def test_update_ca_certificates(File, Ansible, Command, Sudo):
-    ansible_os_family = Ansible('setup')['ansible_facts']['ansible_os_family']
-    if ansible_os_family == 'OpenBSD':
-        filename = '/usr/local/sbin/update-ca-certificates'
-    else:
+def test_update_ca_certificates(File, Ansible, Command, Sudo,
+                                TestinfraBackend):
+    connection = TestinfraBackend.get_connection_type()
+    if connection == 'docker':
         filename = '/usr/sbin/update-ca-certificates'
+    elif connection == 'ansible':
+        ansible_os_family = Ansible('setup')['ansible_facts'][
+            'ansible_os_family']
+        if ansible_os_family == 'OpenBSD':
+            filename = '/usr/local/sbin/update-ca-certificates'
+        else:
+            filename = '/usr/sbin/update-ca-certificates'
     update_ca_certificates = File(filename)
     assert update_ca_certificates.is_file
     assert update_ca_certificates.mode == 0o0755
