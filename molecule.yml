@@ -19,7 +19,7 @@ vagrant:
   - name: debian
     box: debian/jessie64
   instances:
-  - name: ansible-role-ca-store
+  - name: ca-store
     options:
         append_platform_to_hostname: yes
   raw_config_args:
@@ -30,17 +30,17 @@ vagrant:
 
 docker:
   containers:
-  - name: ansible-role-ca-store-xenial
+  - name: ca-store-xenial
     image: ubuntu
     image_version: xenial
     environment:
         DEBIAN_FRONTEND: noninteractive
-  - name: ansible-role-ca-store-trusty
+  - name: ca-store-trusty
     image: ubuntu
     image_version: trusty
     environment:
         DEBIAN_FRONTEND: noninteractive
-  - name: ansible-role-ca-store-jessie
+  - name: ca-store-jessie
     image: debian
     image_version: jessie
     environment:

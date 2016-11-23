@@ -1,5 +1,4 @@
 ---
-# handlers file for ansible-role-ca-store
-
+# handlers file for ca-store
 - name: Update CA store
   command: '{{ "/usr/local/sbin/update-ca-certificates" if ansible_os_family == "OpenBSD" else "/usr/sbin/update-ca-certificates" }}'
