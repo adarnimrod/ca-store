@@ -33,7 +33,7 @@
         entry: piprot --quiet --outdated tests/requirements.txt
         files: requirements.txt
         always_run: true
--   repo: https://www.shore.co.il/git/shell-pre-commit
+-   repo: https://github.com/adarnimrod/shell-pre-commit.git
     sha: master
     hooks:
     -   id: shell-lint
