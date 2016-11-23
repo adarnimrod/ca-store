@@ -31,8 +31,7 @@ Afterwards you'll be able to do the following:
 Requirements
 ------------
 
-See :code:`meta/main.yml`, :code:`tests/requirements.yml` and assertions at
-the top of :code:`tasks/main.yml`.
+See :code:`meta/main.yml` and assertions at the top of :code:`tasks/main.yml`.
 
 Role Variables
 --------------
