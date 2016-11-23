@@ -5,3 +5,13 @@
 
 - hosts: all
   roles: [ ca-store ]
+  post_tasks:
+      - name: Get DH params bit count
+        dhparams:
+            path: /etc/ssl/dhparams.pem
+        register: ca_store_test_dhparams
+
+      - name: Verify high bit count DH params
+        assert:
+            that:
+                - ca_store_test_dhparams.bits >= 2048

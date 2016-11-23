@@ -49,12 +49,6 @@ def test_update_ca_certificates(File, Ansible, Command, Sudo,
         assert Command(filename).rc == 0
 
 
-def test_dh_params(File, Ansible):
-    assert File('/etc/ssl/dhparams.pem').is_file
-    assert int(Ansible('dhparams', 'path=/etc/ssl/dhparams.pem')[
-        "bits"]) >= 2048
-
-
 def test_snakeoil_cert(File):
     assert File('/etc/ssl/certs/ssl-cert-snakeoil.pem').is_file
 
