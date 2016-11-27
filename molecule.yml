@@ -5,7 +5,7 @@ ansible:
   diff: True
   config_file: ../ansible.cfg
 
-dependencies:
+dependency:
   name: galaxy
   requirements_file: tests/requirements.yml
 
@@ -16,7 +16,7 @@ vagrant:
   platforms:
   - name: openbsd
     box: kaorimatz/openbsd-6.0-amd64
-  - name: debian
+  - name: jessie
     box: debian/jessie64
   instances:
   - name: ca-store
@@ -33,8 +33,15 @@ docker:
   - name: ca-store-xenial
     image: ubuntu
     image_version: xenial
+    command: /sbin/init
+    cap_add:
+      - SYS_ADMIN
+    volume_mounts:
+      - /sys/fs/cgroup:/sys/fs/cgroup
+      - /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket
     environment:
         DEBIAN_FRONTEND: noninteractive
+        container: docker
   - name: ca-store-trusty
     image: ubuntu
     image_version: trusty
@@ -43,5 +50,12 @@ docker:
   - name: ca-store-jessie
     image: debian
     image_version: jessie
+    command: /sbin/init
+    cap_add:
+      - SYS_ADMIN
+    volume_mounts:
+      - /sys/fs/cgroup:/sys/fs/cgroup
+      - /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket
     environment:
         DEBIAN_FRONTEND: noninteractive
+        container: docker

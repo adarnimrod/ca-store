@@ -3,6 +3,10 @@
   gather_facts: false
   roles: [adarnimrod.openbsd-bootstrap]
 
+- hosts: ca-store-xenial
+  gather_facts: false
+  roles: [adarnimrod.debian-bootstrap]
+
 - hosts: all
   roles: [ ca-store ]
   post_tasks:

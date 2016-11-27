@@ -1,6 +1,9 @@
 CA store
 ########
 
+.. image:: https://travis-ci.org/adarnimrod/ca-store.svg?branch=master
+    :target: https://travis-ci.org/adarnimrod/ca-store
+
 An Ansible role to setup the CA store. The end goal is too have the same setup
 on both OSes, meaning:
 
