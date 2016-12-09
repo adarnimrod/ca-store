@@ -30,18 +30,12 @@ def test_concat_cert(File, Command):
         'grep BEGIN /usr/share/ca-certificates/*.crt | wc -l').stdout
 
 
-def test_update_ca_certificates(File, Ansible, Command, Sudo,
-                                TestinfraBackend):
-    connection = TestinfraBackend.get_connection_type()
-    if connection == 'docker':
+def test_update_ca_certificates(File, SystemInfo, Command, Sudo):
+    if SystemInfo.type == 'openbsd':
+        filename = '/usr/local/sbin/update-ca-certificates'
+    elif SystemInfo.type == 'linux' and SystemInfo.distribution in ['debian',
+                                                                    'ubuntu']:
         filename = '/usr/sbin/update-ca-certificates'
-    elif connection == 'ansible':
-        ansible_os_family = Ansible('setup')['ansible_facts'][
-            'ansible_os_family']
-        if ansible_os_family == 'OpenBSD':
-            filename = '/usr/local/sbin/update-ca-certificates'
-        else:
-            filename = '/usr/sbin/update-ca-certificates'
     update_ca_certificates = File(filename)
     assert update_ca_certificates.is_file
     assert update_ca_certificates.mode == 0o0755
