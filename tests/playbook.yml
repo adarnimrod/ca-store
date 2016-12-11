@@ -8,6 +8,7 @@
   roles: [adarnimrod.debian-bootstrap]
 
 - hosts: all
+  strategy: free
   roles: [ ca-store ]
   post_tasks:
       - name: Get DH params bit count
